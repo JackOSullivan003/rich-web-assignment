@@ -1,95 +1,84 @@
 "use client";
 
-import {useState} from 'react';
-
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
-import Container from '@mui/material/Container';
-import Box from '@mui/material/Box';
+import { useState } from "react";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import Container from "@mui/material/Container";
+import Box from "@mui/material/Box";
 
 export default function LoginPage() {
+  const [error, setError] = useState("");
 
-const handleSubmit = (event) => {
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    setError(""); 
 
-  console.log("handling submit");
+    const data = new FormData(event.currentTarget);
 
-  event.preventDefault();
+    let email = data.get("email");
+    let pass = data.get("pass");
 
-  const data = new FormData(event.currentTarget);
+    runDBCallAsync(
+      `http://localhost:3000/api/login?email=${email}&pass=${pass}`
+    );
+  };
 
-   let email = data.get('email')
-   let pass = data.get('pass')
+  async function runDBCallAsync(url) {
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
 
-
-   console.log("Sent email:" + email)
-   console.log("Sent pass:" + pass)
-
-   runDBCallAsync(`http://localhost:3000/api/login?email=${email}&pass=${pass}`)
-
- }; // end handle submit
-
-async function runDBCallAsync(url) {
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if(data.data== "valid"){
-      console.log("login is valid!")
-    } else {
-      console.log("not valid  ")
+      if (data.data === "valid") {
+        console.log("Login valid!");
+      } else {
+        setError("Invalid username or password.");
+      }
+    } catch (err) {
+      setError("Could not connect to server.");
     }
-
   }
-
 
   return (
     <Container maxWidth="sm">
+      <Box sx={{ height: "100vh" }}>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label="Email Address"
+            name="email"
+            autoComplete="email"
+            autoFocus
+          />
 
-    <Box sx={{ height: '100vh' }} >
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="pass"
+            label="Password"
+            type="password"
+            id="pass"
+          />
 
-    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+          {error && (
+            <p style={{ color: "red", fontWeight: "bold" }}>{error}</p>
+          )}
 
-    <TextField
-      margin="normal"
-      required
-      fullWidth
-      id="email"
-      label="Email Address"
-      name="email"
-      autoComplete="email"
-      autoFocus
-    />
+          <FormControlLabel
+            control={<Checkbox color="primary" />}
+            label="Remember me"
+          />
 
-    <TextField
-      margin="normal"
-      required
-      fullWidth
-      name="pass"
-      label="Pass"
-      type="pass"
-      id="pass"
-      autoComplete="current-password"
-    />
-
-    <FormControlLabel
-      control={<Checkbox value="remember" color="primary" />}
-      label="Remember me"
-    />
-
-    <Button
-      type="submit"
-      fullWidth
-      variant="contained"
-      sx={{ mt: 3, mb: 2 }}
-    >
-      Sign In
-    </Button>
-</Box>
-</Box>
-       </Container>
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }}>
+            Sign In
+          </Button>
+        </Box>
+      </Box>
+    </Container>
   );
 }
-

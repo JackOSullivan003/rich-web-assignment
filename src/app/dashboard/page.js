@@ -28,11 +28,14 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 
-export default function BasicGrid() {
-
+export default function Dashboard() {
   return (
 
     <Box sx={{ flexGrow: 1 }}>
+    <div style={{ padding: 40 }}>
+      <h1>Welcome to your Dashboard!</h1>
+      <p>You are now logged in.</p>
+    </div>
 
       <Grid container spacing={2}>
 
