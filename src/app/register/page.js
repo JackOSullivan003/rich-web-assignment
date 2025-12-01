@@ -5,6 +5,9 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+
 
 export default function RegisterPage() {
   const [msg, setMsg] = useState("");
@@ -18,7 +21,7 @@ export default function RegisterPage() {
     let pass = data.get("pass");
 
     runRegisterAsync(
-      `http://localhost:3000/api/register?email=${email}&pass=${pass}`
+      `/api/register?email=${email}&pass=${pass}`
     );
   };
 
@@ -28,7 +31,8 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (data.data === "created") {
-        setMsg("Account created!");
+        // Redirect with message
+      window.location.href = "/login?created=true";
       } else {
         setMsg("User already exists.");
       }
@@ -38,9 +42,39 @@ export default function RegisterPage() {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ height: "100vh" }}>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+    <Container
+      maxWidth="sm"
+      sx={{
+        backgroundColor: "#DA291C",
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 2,
+      }}
+    >
+      <Card
+        sx={{
+          width: "100%",
+          borderRadius: 4,
+          padding: 3,
+          backgroundColor: "#FFF8E1",
+          boxShadow: "0px 4px 15px rgba(0,0,0,0.25)",
+        }}
+      >
+        <Typography
+          variant="h4"
+          align="center"
+          sx={{ fontWeight: 800, color: "#27251F", marginBottom: 1 }}
+        >
+          Create Account
+        </Typography>
+
+        <Typography align="center" sx={{ marginBottom: 2, color: "#27251F" }}>
+          Join the McCommunity!
+        </Typography>
+
+        <Box component="form" onSubmit={handleSubmit} noValidate>
           <TextField
             margin="normal"
             required
@@ -48,6 +82,7 @@ export default function RegisterPage() {
             id="email"
             label="Email"
             name="email"
+            sx={{ backgroundColor: "white", borderRadius: 1 }}
           />
 
           <TextField
@@ -58,15 +93,44 @@ export default function RegisterPage() {
             label="Password"
             type="password"
             id="pass"
+            sx={{ backgroundColor: "white", borderRadius: 1 }}
           />
 
-          {msg && <p style={{ fontWeight: "bold" }}>{msg}</p>}
+          {msg && (
+            <p
+              style={{
+                fontWeight: "bold",
+                color: msg.includes("created") ? "green" : "#DA291C",
+              }}
+            >
+              {msg}
+            </p>
+          )}
 
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }}>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{
+              mt: 3,
+              backgroundColor: "#FFC72C",
+              color: "#27251F",
+              fontWeight: 700,
+              paddingY: 1.2,
+              ":hover": { backgroundColor: "#e6b526" },
+            }}
+          >
             Register
           </Button>
+
+          <Typography sx={{ mt: 2, textAlign: "center" }}>
+            Already have an account?{" "}
+            <a href="/login" style={{ color: "#DA291C", fontWeight: "bold" }}>
+              Login
+            </a>
+          </Typography>
         </Box>
-      </Box>
+      </Card>
     </Container>
   );
 }

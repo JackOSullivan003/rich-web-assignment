@@ -1,27 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Card from "@mui/material/Card";
+import { useSearchParams } from "next/navigation";
+import navbar from "../components/navbar.js";
 
 export default function LoginPage() {
   const [error, setError] = useState("");
+  const [createdMsg, setCreatedMsg] = useState("");
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("created") === "true") {
+      setCreatedMsg("Account created! please login to your new account.")
+    }
+  })
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setError(""); 
+    setError("");
 
     const data = new FormData(event.currentTarget);
 
     let email = data.get("email");
     let pass = data.get("pass");
 
-    runDBCallAsync(
-      `http://localhost:3000/api/login?email=${email}&pass=${pass}`
+    runDBCallAsync(`/api/login?email=${email}&pass=${pass}`
     );
   };
 
@@ -29,9 +41,10 @@ export default function LoginPage() {
     try {
       const res = await fetch(url);
       const data = await res.json();
-
+      console.log(data.data);
       if (data.data === "valid") {
-        console.log("Login valid!");
+        console.log("attempting redirect...");
+        window.location.href = "/dashboard";
       } else {
         setError("Invalid username or password.");
       }
@@ -41,9 +54,44 @@ export default function LoginPage() {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ height: "100vh" }}>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+    <Container
+      sx={{
+        height: "100vh",
+        width: "100vh", 
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 2,
+      }}
+    >
+      <Card
+        sx={{
+          width: "100%",
+          borderRadius: 4,
+          padding: 3,
+          backgroundColor: "#FFF8E1", // McDonald's cream color
+          boxShadow: "0px 4px 15px rgba(0,0,0,0.25)",
+        }}
+      >
+        <Typography
+          variant="h4" align="center" sx={{ fontWeight: 800, marginBottom: 1 }}
+        >
+          Welcome Back
+        </Typography>
+        
+        <Typography
+          align="center" sx={{ marginBottom: 3 }}
+        >
+          login in to continue
+        </Typography>
+
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          {createdMsg && (
+            <p style={{ color: "green", fontWeight: "bold", marginBottom: "10px" }}>
+            {createdMsg}
+            </p>
+            )}
+
           <TextField
             margin="normal"
             required
@@ -53,6 +101,7 @@ export default function LoginPage() {
             name="email"
             autoComplete="email"
             autoFocus
+            sx={{ backgroundColor: "white", borderRadius: 1 }}
           />
 
           <TextField
@@ -63,22 +112,44 @@ export default function LoginPage() {
             label="Password"
             type="password"
             id="pass"
+            sx={{ backgroundColor: "white", borderRadius: 1 }}
           />
 
           {error && (
-            <p style={{ color: "red", fontWeight: "bold" }}>{error}</p>
+            <p style={{ color: "#DA291C", fontWeight: "bold" }}>{error}</p>
           )}
 
           <FormControlLabel
-            control={<Checkbox color="primary" />}
+            control={<Checkbox sx={{ color: "#DA291C" }} />}
             label="Remember me"
           />
 
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }}>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{
+              mt: 3,
+              backgroundColor: "#FFC72C", // McDonald's yellow
+              color: "#27251F",
+              fontWeight: 700,
+              paddingY: 1.2,
+              ":hover": { backgroundColor: "#e6b526" },
+            }}
+          >
             Sign In
           </Button>
+
+          <Typography sx={{ mt: 2, textAlign: "center" }}>
+            Don't have an account?{" "}
+            <a href="/register" style={{ color: "#DA291C", fontWeight: "bold" }}>
+              Register
+            </a>
+          </Typography>
         </Box>
-      </Box>
+      </Card>
+
+      <navbar />
     </Container>
   );
 }
