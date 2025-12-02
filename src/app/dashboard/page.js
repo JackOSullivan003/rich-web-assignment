@@ -2,10 +2,8 @@
 'use client'
 
 import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Grid';
-
+import { Card, Grid, Box, Paper } from '@mui/material';
+import Navbar from "@/components/navbar.js";
 
 const Item = styled(Paper)(({ theme }) => ({
 
@@ -30,7 +28,15 @@ const Item = styled(Paper)(({ theme }) => ({
 
 export default function Dashboard() {
   return (
-
+    <Card
+        sx={{
+          width: "100%",
+          borderRadius: 4,
+          padding: 3,
+          backgroundColor: "#FFF8E1", // McDonald's cream color
+          boxShadow: "0px 4px 15px rgba(0,0,0,0.25)",
+        }}
+      >
     <Box sx={{ flexGrow: 1 }}>
     <div style={{ padding: 40 }}>
       <h1>Welcome to your Dashboard!</h1>
@@ -65,6 +71,8 @@ export default function Dashboard() {
       </Grid>
 
     </Box>
+    <Navbar />
+    </Card>
 
   );
 

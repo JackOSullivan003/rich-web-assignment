@@ -1,15 +1,5 @@
-import { MongoClient } from "mongodb";
+import { getCollection } from "@/lib/mongodb";
 import bcrypt from "bcrypt";
-
-let cachedClient = null;
-
-async function connectDB() {
-  if (cachedClient) return cachedClient;
-  const client = new MongoClient(process.env.MONGODB_URL);
-  await client.connect();
-  cachedClient = client;
-  return client;
-}
 
 export async function GET(req, res) {
   // Make a note we are on
@@ -26,15 +16,10 @@ export async function GET(req, res) {
   console.log(pass);
 
   try {
-  // database call goes here
-    const client = await connectDB();   
-    console.log("Connected successfully to server");
-    const dbName = 'McDonaldsApp'; // database name
-    
-    const db = client.db(dbName);
-    const collection = db.collection("login");
+    // database call goes here
+    const users = await getCollection("Users");
 
-    const user = await collection.findOne({ email: email });
+    const user = await users.findOne({ email: email });
 
     if (!user) {
       console.log("No user found");
@@ -48,7 +33,12 @@ export async function GET(req, res) {
     }
 
     console.log("Login is valid!");
-    return Response.json({data: "valid"});
+    if (user.type === "manager"){
+      return Response.json({data: "valid", redirect:"/manager"});
+    }
+    else{
+      return Response.json({data: "valid", redirect:"/dashboard"})
+    }
 
   } catch (error) {
     console.error("DB error:", error);

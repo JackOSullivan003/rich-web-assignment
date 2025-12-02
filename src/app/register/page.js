@@ -3,25 +3,36 @@
 import { useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
+import InputAdornment from '@mui/material/InputAdornment';
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Card from "@mui/material/Card";
-
+import Navbar from "@/components/navbar.js";
 
 export default function RegisterPage() {
   const [msg, setMsg] = useState("");
+  const [firstName, setFirst] = useState("");
+  const [lastName, setLast] = useState("");
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [error, setError] = useState("");
+  
+  const isFormValid = firstName.length > 0 && lastName.length > 0 && email.length > 0 
+  && pass.length > 0 && confirmPass.length > 0 && pass === confirmPass;
 
   const handleSubmit = (event) => {
     event.preventDefault();
     setMsg("");
 
-    const data = new FormData(event.currentTarget);
-    let email = data.get("email");
-    let pass = data.get("pass");
+    if (pass !== confirmPass) {
+      setError("Passwords do not match.");
+      return;
+    }
 
     runRegisterAsync(
-      `/api/register?email=${email}&pass=${pass}`
+      `/api/register?first=${firstName}&last=${lastName}&email=${email}&pass=${pass}`
     );
   };
 
@@ -43,9 +54,7 @@ export default function RegisterPage() {
 
   return (
     <Container
-      maxWidth="sm"
       sx={{
-        backgroundColor: "#DA291C",
         height: "100vh",
         display: "flex",
         justifyContent: "center",
@@ -79,9 +88,34 @@ export default function RegisterPage() {
             margin="normal"
             required
             fullWidth
+            id="firstName"
+            label="First Name"
+            name="first"
+            autoFocus
+            onChange={(e) => setFirst(e.target.value)}
+            sx={{ backgroundColor: "white", borderRadius: 1 }}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="lastName"
+            label="Last Name"
+            name="last"
+            autoFocus
+            onChange={(e) => setLast(e.target.value)}
+            sx={{ backgroundColor: "white", borderRadius: 1 }}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
             id="email"
             label="Email"
             name="email"
+            autoComplete="email"
+            autoFocus
+            onChange={(e) => setEmail(e.target.value)}
             sx={{ backgroundColor: "white", borderRadius: 1 }}
           />
 
@@ -93,6 +127,23 @@ export default function RegisterPage() {
             label="Password"
             type="password"
             id="pass"
+            onChange={(e) => setPass(e.target.value)}
+            sx={{ backgroundColor: "white", borderRadius: 1 }}
+          />
+
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="confirmPass"
+            label="Confirm Password"
+            type="password"
+            id="confirmPass"
+            onChange={(e) => setConfirmPass(e.target.value)}
+            error={confirmPass.length > 0 && pass !== confirmPass}    // red outline
+            helperText={
+              confirmPass.length > 0 && pass !== confirmPass ? "Passwords do not match." : ""
+            }
             sx={{ backgroundColor: "white", borderRadius: 1 }}
           />
 
@@ -111,6 +162,7 @@ export default function RegisterPage() {
             type="submit"
             fullWidth
             variant="contained"
+            disabled={!isFormValid}
             sx={{
               mt: 3,
               backgroundColor: "#FFC72C",
@@ -131,6 +183,7 @@ export default function RegisterPage() {
           </Typography>
         </Box>
       </Card>
+      <Navbar />
     </Container>
   );
 }

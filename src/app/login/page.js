@@ -10,12 +10,14 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Card from "@mui/material/Card";
 import { useSearchParams } from "next/navigation";
-import navbar from "../components/navbar.js";
+import Navbar from "@/components/navbar.js";
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
   const [error, setError] = useState("");
   const [createdMsg, setCreatedMsg] = useState("");
-
+  const isFormValid = email.length > 0 && pass.length > 0;
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -28,11 +30,6 @@ export default function LoginPage() {
     event.preventDefault();
     setError("");
 
-    const data = new FormData(event.currentTarget);
-
-    let email = data.get("email");
-    let pass = data.get("pass");
-
     runDBCallAsync(`/api/login?email=${email}&pass=${pass}`
     );
   };
@@ -44,7 +41,7 @@ export default function LoginPage() {
       console.log(data.data);
       if (data.data === "valid") {
         console.log("attempting redirect...");
-        window.location.href = "/dashboard";
+        window.location.href = data.redirect;
       } else {
         setError("Invalid username or password.");
       }
@@ -57,11 +54,11 @@ export default function LoginPage() {
     <Container
       sx={{
         height: "100vh",
-        width: "100vh", 
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         padding: 2,
+
       }}
     >
       <Card
@@ -97,10 +94,11 @@ export default function LoginPage() {
             required
             fullWidth
             id="email"
-            label="Email Address"
+            label="Email"
             name="email"
             autoComplete="email"
             autoFocus
+            onChange={(e) => setEmail(e.target.value)}
             sx={{ backgroundColor: "white", borderRadius: 1 }}
           />
 
@@ -112,6 +110,7 @@ export default function LoginPage() {
             label="Password"
             type="password"
             id="pass"
+            onChange={(e) => setPass(e.target.value)}
             sx={{ backgroundColor: "white", borderRadius: 1 }}
           />
 
@@ -128,6 +127,7 @@ export default function LoginPage() {
             type="submit"
             fullWidth
             variant="contained"
+            disabled={!isFormValid}
             sx={{
               mt: 3,
               backgroundColor: "#FFC72C", // McDonald's yellow
@@ -149,7 +149,7 @@ export default function LoginPage() {
         </Box>
       </Card>
 
-      <navbar />
+      <Navbar />
     </Container>
   );
 }
