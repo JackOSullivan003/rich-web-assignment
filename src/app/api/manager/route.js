@@ -23,19 +23,22 @@ export async function GET(req) {
         break;
 
       case "graph":
-        // Aggregate total orders by day for Chart.js
         const ordersCollection = await getCollection("Orders");
+
         data = await ordersCollection.aggregate([
           {
             $group: {
-              _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-              totalOrders: { $sum: 1 },
-            },
+                _id: {
+                    $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+                },
+                totalRevenue: { $sum: "$total" }, // sum of all order totals
+                orderCount: { $sum: 1 }            // number of orders that day
+            }
           },
-          { $sort: { _id: 1 } },
+          { $sort: { _id: 1 } }
         ]).toArray();
-        break;
-
+      break;
+      
       default:
         return Response.json({ error: "Invalid section" }, { status: 400 });
     }
@@ -51,7 +54,9 @@ export async function POST(req) {
   const body = await req.json();
 
   switch (body.action) {
-    // PRODUCTS 
+
+
+    // PRODUCT ACTIONS
     case "addProduct": {
       const products = await getCollection("Products");
       await products.insertOne({
@@ -68,7 +73,8 @@ export async function POST(req) {
       return Response.json({ success: true });
     }
 
-    // USERS 
+
+    // USER ACTIONS
     case "addUser": {
       const users = await getCollection("Users");
       const hashedPassword = await bcrypt.hash(body.password, 10);
@@ -84,6 +90,7 @@ export async function POST(req) {
     case "editUser": {
       const users = await getCollection("Users");
       const updateFields = { email: body.email, type: body.type };
+
       if (body.password) {
         updateFields.password = await bcrypt.hash(body.password, 10);
       }
@@ -98,6 +105,46 @@ export async function POST(req) {
     case "deleteUser": {
       const users = await getCollection("Users");
       await users.deleteOne({ _id: new ObjectId(body.id) });
+      return Response.json({ success: true });
+    }
+
+
+
+    // ORDER ACTIONS
+    case "addOrder": {
+      const orders = await getCollection("Orders");
+      await orders.insertOne({
+        userId: body.userId ? new ObjectId(body.userId) : null,
+        items: body.items,
+        total: body.total,
+        status: body.status || "pending",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      return Response.json({ success: true });
+    }
+
+    case "editOrder": {
+      const orders = await getCollection("Orders");
+
+      await orders.updateOne(
+        { _id: new ObjectId(body.id) },
+        {
+          $set: {
+            items: body.items,
+            total: body.total,
+            status: body.status,
+            updatedAt: new Date()
+          }
+        }
+      );
+
+      return Response.json({ success: true });
+    }
+
+    case "deleteOrder": {
+      const orders = await getCollection("Orders");
+      await orders.deleteOne({ _id: new ObjectId(body.id) });
       return Response.json({ success: true });
     }
 
