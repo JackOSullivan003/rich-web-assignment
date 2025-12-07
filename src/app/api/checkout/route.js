@@ -20,7 +20,6 @@ export async function POST(req) {
     
     const cart = await getCollection("Cart");
     await cart.updateOne(
-        { userId: data.userId },
         { $set: { items: [] } }
       );
 

@@ -1,36 +1,17 @@
 "use client";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import HomeIcon from '@mui/icons-material/HomeOutlined';
 import AccountIcon from '@mui/icons-material/AccountCircleOutlined';
-import CheckoutIcon from '@mui/icons-material/ShoppingCartOutlined';
 import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
-import Badge from "@mui/material/Badge";
 
 export default function BottomNav() {
-  const searchParams = useSearchParams();
-  const userId = searchParams.get("id") || "temp-" + Math.random();
-
   const [cartOpen, setCartOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
 
   const [navValue, setNavValue] = useState(0);
-  const fetchCount = async () => {
-    const res = await fetch(`/api/cart?id=${userId}`);
-    const data = await res.json();
-
-    const total =
-      data.cart.items.reduce((sum, item) => sum + item.quantity, 0);
-
-    setCartCount(total);
-  };
-
-  useEffect(() => {
-    fetchCount();
-  }, []);
 
     return (    
     
@@ -59,7 +40,6 @@ export default function BottomNav() {
       sx={{ backgroundColor: "#FFF8E1" }}
     >
       <BottomNavigationAction value={0} label="Home" icon={<HomeIcon />} href="/dashboard" />
-
       <BottomNavigationAction value={2} label="Admin" icon={<AdminIcon/>} href="/manager"/>
       <BottomNavigationAction value={3} label="Account" icon={<AccountIcon />} href="/register" />
     </BottomNavigation>
