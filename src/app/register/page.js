@@ -118,7 +118,6 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             sx={{ backgroundColor: "white", borderRadius: 1 }}
           />
-
           <TextField
             margin="normal"
             required

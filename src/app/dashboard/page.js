@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Container,
   Grid,
@@ -9,8 +10,11 @@ import {
   Typography,
   Button,
   Box,
+  IconButton,
 } from "@mui/material";
 import Navbar from "@/components/navbar.js";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
@@ -18,7 +22,14 @@ export default function Dashboard() {
   const [weather, setWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
 
-  const CATEGORIES = ["burger", "side", "drink", "dessert"];
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [items, setItems] = useState([]);
+
+  const searchParams = useSearchParams();
+  const [userId] = useState(searchParams.get("id") || "temp-" + Math.random());
+
+  const [CATEGORIES, setCategories] = useState([]);
 
   // Fetch products
   async function fetchProducts() {
@@ -27,21 +38,16 @@ export default function Dashboard() {
     setProducts(json.products);
   }
 
-  // Fetch weather using OpenWeatherMap API
+  // Fetch weather
   async function fetchWeather() {
     try {
       setWeatherLoading(true);
-
-      // Pick your location — example: Dublin
       const lat = 53.3498;
       const lon = -6.2603;
-
       const res = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
       );
-
       const data = await res.json();
-
       if (data.current_weather) {
         setWeather({
           temp: data.current_weather.temperature,
@@ -56,54 +62,155 @@ export default function Dashboard() {
     }
   }
 
+  // Fetch cart items
+  const fetchCart = async () => {
+    try {
+      const res = await fetch(`/api/cart?id=${userId}`);
+      const data = await res.json();
+      const cartItems = data.cart?.items || [];
+      setItems(cartItems);
+      const totalCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+      setCartCount(totalCount);
+    } catch (err) {
+      console.error("Failed to fetch cart:", err);
+      setItems([]);
+      setCartCount(0);
+    }
+  };
+
+  // Add product to cart
+  const addToCart = async (product) => {
+  await fetch("/api/cart", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userId,
+      productId: product._id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+    }),
+  });
+  fetchCart();
+};
+
+
+  // Update item quantity
+  const updateQuantity = async (productId, delta) => {
+    const item = items.find((i) => i.productId === productId);
+    if (!item) return;
+    const newQuantity = item.quantity + delta;
+    if (newQuantity < 1) {
+      // Remove item
+      await fetch("/api/cart", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, productId }),
+      });
+    } else {
+      // Update quantity
+      await fetch("/api/cart", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, productId, quantity: newQuantity }),
+      });
+    }
+    fetchCart();
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchWeather();
-  }, []);
+    fetchCart();
+  }, [userId]);
+
+useEffect(() => {
+  async function loadCategories() {
+    try {
+      const res = await fetch("/api/dashboard");
+
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("Dashboard API returned non-JSON", res);
+        return;
+      }
+
+      const data = await res.json();
+
+      console.log("API returned:", data);
+
+      const products = data.products || []; 
+
+      const uniqueCategories = [
+        ...new Set(products.map(p => p.category).filter(Boolean))
+      ];
+
+      setCategories(uniqueCategories);
+    } catch (error) {
+      console.error("Failed to load categories:", error);
+    }
+  }
+
+  loadCategories();
+}, []);
+
 
   const filteredProducts = products.filter(
     (p) => p.category.toLowerCase() === filter.toLowerCase()
   );
 
+  // Calculate total price
+  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   return (
     <Container sx={{ mt: 4, mb: 6 }}>
+      <Box sx={{ alignItems: "center" }}>
+        <Box
+          sx={{
+            background: "#FFF8E1",
+            padding: 5,
+            minWidth: 260,
+            boxShadow: 10,
+          }}
+        >
+          <Typography variant="h4" sx={{ fontWeight: 800, textAlign: "left" }}>
+            Our Menu
+          </Typography>
 
-    <Box
-      sx={{
-        alignItems: "center",
-      }}
-    >
+          <Box sx={{ textAlign: "right" }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Weather
+            </Typography>
+            {weatherLoading ? (
+              <Typography>Loading...</Typography>
+            ) : weather ? (
+              <>
+                <Typography>🌡 {weather.temp}°C</Typography>
+                <Typography>💨 Wind: {weather.wind} km/h</Typography>
+              </>
+            ) : (
+              <Typography>Error loading weather</Typography>
+            )}
+          </Box>
+        </Box>
 
-      <Box
-        sx={{
-          background: "#FFF8E1",
-          padding: 5,
-          minWidth: 260,
-          boxShadow: 10,
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: 800, textAlign:"left"}}>
-          Our Menu
-        </Typography>
-      
-      
-      <Box sx={{ textAlign:"right" }}>
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          Weather
-        </Typography>
-        {weatherLoading ? (
-          <Typography>Loading...</Typography>
-        ) : weather ? (
-          <>
-            <Typography>🌡 {weather.temp}°C</Typography>
-            <Typography>💨 Wind: {weather.wind} km/h</Typography>
-          </>
-        ) : (
-          <Typography>Error loading weather</Typography>
-        )}
+        <Button
+          variant="contained"
+          sx={{
+            backgroundColor: "#FFC72C",
+            color: "black",
+            fontWeight: 700,
+            "&:hover": { backgroundColor: "#FDB913" },
+            position: "fixed",
+            right: 40,
+            bottom: 80,
+            zIndex: 2000,
+          }}
+          onClick={() => setCartOpen(true)}
+        >
+          Cart ({cartCount})
+        </Button>
       </Box>
-      </Box>
-    </Box>
 
       <Box
         sx={{
@@ -171,9 +278,7 @@ export default function Dashboard() {
                         fontWeight: 700,
                         "&:hover": { backgroundColor: "#FDB913" },
                       }}
-                      onClick={() =>
-                        console.log("Add to cart clicked:", product.name)
-                      }
+                      onClick={() => addToCart(product)}
                     >
                       Add to Cart
                     </Button>
@@ -184,6 +289,94 @@ export default function Dashboard() {
           ))
         )}
       </Grid>
+
+      {cartOpen && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "#FFF8E1",
+            zIndex: 3000,
+            p: 3,
+            overflowY: "auto",
+          }}
+        >
+          <Button
+            onClick={() => {setCartOpen(false); fetchCart();}}
+            sx={{
+              position: "absolute",
+              top: 16,
+              left: 32,
+              minWidth: "auto",
+              padding: 0,
+              fontSize: 36,
+              fontWeight: 600,
+            }}
+          >
+            X
+          </Button>
+          
+          <Typography variant="h4" sx={{ fontWeight: 800, textAlign: "center", mb: 3 }}>
+            Your Cart
+          </Typography>
+          
+          {items.length === 0 ? (
+            <Typography sx={{ textAlign: "center", mt: 10 }}>No items in cart.</Typography>
+          ) : (
+            <Box>
+              {items.map((item) => (
+                <Box
+                  key={item.productId}
+                  sx={{
+                    mb: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    backgroundColor: "#FFF2CC",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ fontWeight: 700 }}>{item.name}</Typography>
+                    <Typography>€{(item.price * item.quantity).toFixed(2)}</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <IconButton size="small" onClick={() => updateQuantity(item.productId, -1)}>
+                      <RemoveIcon />
+                    </IconButton>
+                    <Typography>{item.quantity}</Typography>
+                    <IconButton size="small" onClick={() => updateQuantity(item.productId, 1)}>
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ))}
+
+              <Typography sx={{ fontWeight: 700, mt: 4, fontSize: 18 }}>
+                Total: €{totalPrice.toFixed(2)}
+              </Typography>
+            
+              <Button
+                variant="contained"
+                fullWidth
+                sx={{
+                  mt: 3,
+                  backgroundColor: "#DA291C",
+                  "&:hover": { backgroundColor: "#B71C1C" },
+                }}
+                onClick={() => window.location.href = `/checkout?id=${userId}`}
+              >
+                Checkout
+              </Button>
+            </Box>
+          )}
+        </Box>
+      )}
+
 
       <Navbar />
     </Container>

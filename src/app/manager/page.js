@@ -13,19 +13,15 @@ import IconButton from "@mui/material/IconButton";
 import MenuItem from '@mui/material/MenuItem';
 import { Chart, LineController, LineElement, PointElement, LinearScale, Title, CategoryScale } from "chart.js";
 
-// Register necessary Chart.js components
 Chart.register(LineController, LineElement, PointElement, LinearScale, Title, CategoryScale);
 
 export default function ManagerDashboard() {
-  const [activeSection, setActiveSection] = useState(""); 
+  const [activeSection, setActiveSection] = useState("");
   const [orders, setOrders] = useState([]);
   const [chartData, setChartData] = useState({ labels: [], values: [] });
   const [products, setProducts] = useState([]);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [productToDelete, setProductToDelete] = useState(null);
-  const [showSnackbar, setShowSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
   const [users, setUsers] = useState([]);
+
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [newCategory, setNewCategory] = useState("");
@@ -79,7 +75,6 @@ export default function ManagerDashboard() {
   useEffect(() => {
     if (!chartRef.current || chartData.labels.length === 0) return;
 
-    // Destroy previous chart instance if exists
     if (chartInstanceRef.current) chartInstanceRef.current.destroy();
 
     chartInstanceRef.current = new Chart(chartRef.current, {
@@ -149,7 +144,6 @@ export default function ManagerDashboard() {
           </Card>
         )}
 
-
         {activeSection === "orders" && (
           <Card
             sx={{
@@ -162,7 +156,7 @@ export default function ManagerDashboard() {
             <Typography variant="h5" sx={{ fontWeight: 700, marginBottom: 2 }}>
               Orders
             </Typography>
-          
+
             <TableContainer component={Paper}>
               <Table>
                 <TableHead sx={{ backgroundColor: "#FFC72C" }}>
@@ -174,7 +168,7 @@ export default function ManagerDashboard() {
                     <TableCell sx={{ fontWeight: 800 }}>Created</TableCell>
                   </TableRow>
                 </TableHead>
-          
+
                 <TableBody>
                   {orders.length === 0 ? (
                     <TableRow>
@@ -186,7 +180,7 @@ export default function ManagerDashboard() {
                     orders.map((order) => (
                       <TableRow key={order._id} hover>
                         <TableCell>{order.userEmail}</TableCell>
-                    
+
                         <TableCell>
                           {order.items.map((item, i) => (
                             <Typography key={i} sx={{ fontSize: "14px" }}>
@@ -194,13 +188,13 @@ export default function ManagerDashboard() {
                             </Typography>
                           ))}
                         </TableCell>
-                        
+
                         <TableCell>€{order.total.toFixed(2)}</TableCell>
-                        
+
                         <TableCell sx={{ textTransform: "capitalize" }}>
                           {order.status}
                         </TableCell>
-                        
+
                         <TableCell>
                           {new Date(order.createdAt).toLocaleString()}
                         </TableCell>
@@ -212,7 +206,6 @@ export default function ManagerDashboard() {
             </TableContainer>
           </Card>
         )}
-
 
         {activeSection === "products" && (
           <Card
@@ -226,12 +219,12 @@ export default function ManagerDashboard() {
             <Typography variant="h5" sx={{ fontWeight: 700, marginBottom: 2 }}>
               Products
             </Typography>
-            
+
             <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
               <Button
                 variant="contained"
                 sx={{ backgroundColor: "#DA291C", ":hover": { backgroundColor: "#b71d17" } }}
-                onClick={() => setShowAddProduct(true)}
+                onClick={() => manager.setShowAddProduct(true)}
               >
                 Add Product
               </Button>
@@ -247,7 +240,7 @@ export default function ManagerDashboard() {
                     <TableCell sx={{ fontWeight: 800 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
-          
+
                 <TableBody>
                   {products.length === 0 ? (
                     <TableRow>
@@ -262,22 +255,25 @@ export default function ManagerDashboard() {
                         <TableCell>€{product.price.toFixed(2)}</TableCell>
                         <TableCell>{product.category}</TableCell>
                         <TableCell>
-                          <IconButton 
-                            color="primary" 
-                            onClick={() => console.log("Edit feature coming soon!")}
+                          <IconButton
+                            color="primary"
+                            onClick={() => {
+                              manager.setProductToEdit(product);
+                              manager.setShowEditProduct(true);
+                            }}
                           >
                             <EditIcon />
                           </IconButton>
-                          <IconButton 
+                          <IconButton
                             color="error"
                             onClick={() => {
-                              setProductToDelete(product);
-                              setShowDeleteConfirm(true);
+                              manager.setProductToDelete(product);
+                              manager.setShowDeleteProduct(true);
                             }}
                           >
                             <DeleteIcon />
                           </IconButton>
-                          </TableCell>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -286,7 +282,7 @@ export default function ManagerDashboard() {
             </TableContainer>
           </Card>
         )}
-      
+
       <Modal
         open={manager.showAddProduct}
         onClose={() => manager.setShowAddProduct(false)}
@@ -309,10 +305,16 @@ export default function ManagerDashboard() {
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
             Add New Product
           </Typography>
-      
+
           <Box
             component="form"
-            onSubmit={manager.handleAddProduct}
+            onSubmit={async (e) => {
+              e.preventDefault();
+              await manager.handleAddProduct(newName, newPrice, newCategory);
+              setNewName("");
+              setNewPrice("");
+              setNewCategory("");
+            }}
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
             <TextField
@@ -340,11 +342,11 @@ export default function ManagerDashboard() {
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
               <Button
                 variant="outlined"
-                onClick={() => setShowAddProduct(false)}
+                onClick={() => manager.setShowAddProduct(false)}
               >
                 Cancel
               </Button>
-      
+
               <Button
                 type="submit"
                 variant="contained"
@@ -356,10 +358,78 @@ export default function ManagerDashboard() {
           </Box>
         </Card>
       </Modal>
-      
+
       <Modal
-        open={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
+        open={manager.showEditProduct}
+        onClose={() => manager.setShowEditProduct(false)}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backdropFilter: "blur(3px)"
+        }}
+      >
+        <Card sx={{ p: 4, minWidth: 400, backgroundColor: "white", borderRadius: 4 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
+            Edit Product
+          </Typography>
+
+          <Box
+            component="form"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              await manager.handleEditProduct(
+                manager.productToEdit._id,
+                manager.productToEdit.name,
+                manager.productToEdit.price,
+                manager.productToEdit.category
+              );
+            }}
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <TextField
+              label="Name"
+              required
+              value={manager.productToEdit?.name || ""}
+              onChange={(e) =>
+                manager.setProductToEdit({ ...manager.productToEdit, name: e.target.value })
+              }
+            />
+
+            <TextField
+              label="Price"
+              type="number"
+              required
+              value={manager.productToEdit?.price || 0}
+              onChange={(e) =>
+                manager.setProductToEdit({ ...manager.productToEdit, price: e.target.value })
+              }
+            />
+
+            <TextField
+              label="Category"
+              required
+              value={manager.productToEdit?.category || ""}
+              onChange={(e) =>
+                manager.setProductToEdit({ ...manager.productToEdit, category: e.target.value })
+              }
+            />
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <Button variant="outlined" onClick={() => manager.setShowEditProduct(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained" sx={{ backgroundColor: "#DA291C" }}>
+                Save
+              </Button>
+            </Box>
+          </Box>
+        </Card>
+      </Modal>
+
+      <Modal
+        open={manager.showDeleteProduct}
+        onClose={() => manager.setShowDeleteProduct(false)}
         >
           <Box sx={{
             position: "absolute",
@@ -375,25 +445,22 @@ export default function ManagerDashboard() {
             <Typography variant="h6" fontWeight={700}>
               Delete product?
             </Typography>
-        
+
             <Typography sx={{ mt: 2 }}>
-              Are you sure you want to delete <b>{productToDelete?.name}</b>?
+              Are you sure you want to delete <b>{manager.productToDelete?.name}</b>?
             </Typography>
-        
+
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
-              <Button onClick={() => setShowDeleteConfirm(false)}>
+              <Button onClick={() => manager.setShowDeleteProduct(false)}>
                 Cancel
               </Button>
-        
-              <Button 
-                variant="contained" 
+
+              <Button
+                variant="contained"
                 color="error"
                 onClick={async () => {
-                  await handleDeleteProduct(productToDelete._id);
-                  setShowDeleteConfirm(false);
-                
-                  setSnackbarMessage("Product deleted successfully.");
-                  setShowSnackbar(true);
+                  await manager.handleDeleteProduct(manager.productToDelete._id);
+                  manager.setShowDeleteProduct(false);
                 }}
               >
                 Delete
@@ -402,92 +469,145 @@ export default function ManagerDashboard() {
           </Box>
       </Modal>
 
-        {activeSection === "users" && (
-          <Card sx={{ padding: 3, borderRadius: 4, backgroundColor: "#FFF8E1", boxShadow: "0px 4px 15px rgba(0,0,0,0.25)" }}>
-            <Typography variant="h5" sx={{ fontWeight: 700, marginBottom: 2 }}>
-              Users
-            </Typography>
-
-            <Box sx={{ mb: 2 }}>
-              <Button
-                variant="contained"
-                sx={{ backgroundColor: "#DA291C" }}
-                onClick={() => manager.setShowAddUser(true)}
-              >
-                Add User
-              </Button>
-            </Box>
-
-
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead sx={{ backgroundColor: "#FFC72C" }}>
+      {activeSection === "users" && (
+        <Card sx={{ padding: 3, borderRadius: 4, backgroundColor: "#FFF8E1", boxShadow: "0px 4px 15px rgba(0,0,0,0.25)" }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, marginBottom: 2 }}>
+            Users
+          </Typography>
+          <Box sx={{ mb: 2 }}>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: "#DA291C" }}
+              onClick={() => manager.setShowAddUser(true)}
+            >
+              Add User
+            </Button>
+          </Box>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead sx={{ backgroundColor: "#FFC72C" }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 800 }}>Email</TableCell>
+                <TableCell sx={{ fontWeight: 800 }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: 800 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.length === 0 ? (
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 800 }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 800 }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 800 }}>Actions</TableCell>
+                  <TableCell colSpan={3} align="center">
+                    No users found.
+                  </TableCell>
                 </TableRow>
-              </TableHead>
+              ) : (
+                users.map((user) => (
+                  <TableRow key={user._id} hover>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.type}</TableCell>
 
-              <TableBody>
-                {users.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} align="center">
-                      No users found.
+                    <TableCell>
+                      <IconButton
+                        color="primary"
+                        onClick={() => {
+                          manager.setUserToEdit(user);
+                          manager.setShowEditUser(true);
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+
+                      <IconButton
+                        color="error"
+                        onClick={() => {
+                          manager.setUserToDelete(user);
+                          manager.setShowDeleteUser(true);
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
                     </TableCell>
-                  </TableRow>
-                ) : (
-                  users.map((user) => (
-                    <TableRow key={user._id} hover>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.type}</TableCell>
-                  
-                      <TableCell>
-                        <IconButton
-                          color="primary"
-                          onClick={() => {
-                            manager.setUserToEdit(user);
-                            manager.setShowEditUser(true);
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        
-                        <IconButton
-                          color="error"
-                          onClick={() => {
-                            manager.setUserToDelete(user);
-                            manager.setShowDeleteUser(true);
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                        
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-              </Table>
-            </TableContainer>
-          </Card>
-        )}
 
-        <Modal open={manager.showAddUser} onClose={() => manager.setShowAddUser(false)}>
-          <Card sx={{ p: 4, mx: "auto", mt: "15vh", width: 400 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              Add New User
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
+      )}
+
+      <Modal open={manager.showAddUser} onClose={() => manager.setShowAddUser(false)}>
+        <Card sx={{ p: 4, mx: "auto", mt: "15vh", width: 400 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+            Add New User
+          </Typography>
+
+          <Box component="form" onSubmit={(e) => {    e.preventDefault();    manager.handleAddUser(manager.newUserEmail, manager.newUserPassword, manager.newUserType);  }}  sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField label="Email" required value={manager.newUserEmail} onChange={e => manager.setNewUserEmail(e.target.value)} />
+            <TextField label="Password" type="password" required value={manager.newUserPassword} onChange={e => manager.setNewUserPassword(e.target.value)} />
+
+            <TextField
+              label="Type"
+              select
+              value={manager.newUserType}
+              onChange={e => manager.setNewUserType(e.target.value)}
+            >
+              <MenuItem value="customer">Customer</MenuItem>
+              <MenuItem value="staff">Staff</MenuItem>
+              <MenuItem value="manager">Manager</MenuItem>
+            </TextField>
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <Button variant="outlined" onClick={() => manager.setShowAddUser(false)}>Cancel</Button>
+              <Button type="submit" variant="contained" sx={{ backgroundColor: "#DA291C" }}>Add</Button>
+            </Box>
+          </Box>
+        </Card>
+      </Modal>
+
+      <Modal
+          open={manager.showEditUser}
+          onClose={() => manager.setShowEditUser(false)}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backdropFilter: "blur(3px)",
+          }}
+        >
+          <Card sx={{ p: 4, minWidth: 400, backgroundColor: "white", borderRadius: 4 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
+              Edit User
             </Typography>
 
-            <Box component="form" onSubmit={(e) => {    e.preventDefault();    manager.handleAddUser(manager.newUserEmail, manager.newUserPassword, manager.newUserType);  }}  sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <TextField label="Email" required value={manager.newUserEmail} onChange={e => manager.setNewUserEmail(e.target.value)} />
-              <TextField label="Password" type="password" required value={manager.newUserPassword} onChange={e => manager.setNewUserPassword(e.target.value)} />
+            <Box
+              component="form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                manager.handleEditUser(
+                  manager.userToEdit._id,
+                  manager.userToEdit.email,
+                  manager.userToEdit.type
+                );
+              }}
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <TextField
+                label="Email"
+                required
+                value={manager.userToEdit?.email || ""}
+                onChange={(e) =>
+                  manager.setUserToEdit({ ...manager.userToEdit, email: e.target.value })
+                }
+              />
 
               <TextField
                 label="Type"
                 select
-                value={manager.newUserType}
-                onChange={e => manager.setNewUserType(e.target.value)}
+                value={manager.userToEdit?.type || "customer"}
+                onChange={(e) =>
+                  manager.setUserToEdit({ ...manager.userToEdit, type: e.target.value })
+                }
               >
                 <MenuItem value="customer">Customer</MenuItem>
                 <MenuItem value="staff">Staff</MenuItem>
@@ -495,102 +615,45 @@ export default function ManagerDashboard() {
               </TextField>
 
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                <Button variant="outlined" onClick={() => manager.setShowAddUser(false)}>Cancel</Button>
-                <Button type="submit" variant="contained" sx={{ backgroundColor: "#DA291C" }}>Add</Button>
+                <Button variant="outlined" onClick={() => manager.setShowEditUser(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="contained" sx={{ backgroundColor: "#DA291C" }}>
+                  Save
+                </Button>
               </Box>
             </Box>
           </Card>
         </Modal>
 
-        <Modal
-            open={manager.showEditUser}
-            onClose={() => manager.setShowEditUser(false)}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backdropFilter: "blur(3px)",
-            }}
-          >
-            <Card sx={{ p: 4, minWidth: 400, backgroundColor: "white", borderRadius: 4 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
-                Edit User
-              </Typography>
-          
-              <Box
-                component="form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  manager.handleEditUser(
-                    manager.userToEdit._id,
-                    manager.userToEdit.email,
-                    manager.userToEdit.type
-                  );
-                }}
-                sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+        <Modal open={manager.showDeleteUser} onClose={() => manager.setShowDeleteUser(false)} 
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backdropFilter: "blur(3px)",
+          }}>
+          <Card sx={{ p: 4, mx: "auto", mt: "15vh", width: 400 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+              Confirm Delete
+            </Typography>
+
+            <Typography sx={{ mb: 3 }}>
+              Are you sure you want to delete user {manager.userToDelete?.email}?
+            </Typography>
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <Button variant="outlined" onClick={() => manager.setShowDeleteUser(false)}>Cancel</Button>
+              <Button
+                variant="contained"
+                sx={{ backgroundColor: "#DA291C" }}
+                onClick={() => manager.handleDeleteUser(manager.userToDelete._id)}
               >
-                <TextField
-                  label="Email"
-                  required
-                  value={manager.userToEdit?.email || ""}
-                  onChange={(e) =>
-                    manager.setUserToEdit({ ...manager.userToEdit, email: e.target.value })
-                  }
-                />
-
-                <TextField
-                  label="Type"
-                  select
-                  value={manager.userToEdit?.type || "customer"}
-                  onChange={(e) =>
-                    manager.setUserToEdit({ ...manager.userToEdit, type: e.target.value })
-                  }
-                >
-                  <MenuItem value="customer">Customer</MenuItem>
-                  <MenuItem value="staff">Staff</MenuItem>
-                  <MenuItem value="manager">Manager</MenuItem>
-                </TextField>
-                
-                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                  <Button variant="outlined" onClick={() => manager.setShowEditUser(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" variant="contained" sx={{ backgroundColor: "#DA291C" }}>
-                    Save
-                  </Button>
-                </Box>
-              </Box>
-            </Card>
-          </Modal>
-
-          <Modal open={manager.showDeleteUser} onClose={() => manager.setShowDeleteUser(false)} 
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backdropFilter: "blur(3px)",
-            }}>
-            <Card sx={{ p: 4, mx: "auto", mt: "15vh", width: 400 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                Confirm Delete
-              </Typography>
-
-              <Typography sx={{ mb: 3 }}>
-                Are you sure you want to delete user {manager.userToDelete?.email}?
-              </Typography>
-
-              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-                <Button variant="outlined" onClick={() => manager.setShowDeleteUser(false)}>Cancel</Button>
-                <Button
-                  variant="contained"
-                  sx={{ backgroundColor: "#DA291C" }}
-                  onClick={() => manager.handleDeleteUser(manager.userToDelete._id)}
-                >
-                  Delete
-                </Button>
-              </Box>
-            </Card>
-          </Modal>
+                Delete
+              </Button>
+            </Box>
+          </Card>
+        </Modal>
       </Box>
     <Navbar />
   </Container>

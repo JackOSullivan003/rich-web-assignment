@@ -67,6 +67,17 @@ export async function POST(req) {
       return Response.json({ success: true });
     }
 
+
+    case "editProduct": {
+      const products = await getCollection("Products");
+      const updateFields = { name : body.name, price : body.price, category : body.category}
+      await products.updateOne(
+        {_id: new ObjectId(body.id)},
+        {$set: updateFields}
+      )
+      return Response.json({ success: true });
+    }
+
     case "deleteProduct": {
       const products = await getCollection("Products");
       await products.deleteOne({ _id: new ObjectId(body.id) });
