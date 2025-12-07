@@ -17,7 +17,7 @@ export function useManagerActions({ fetchUsers, fetchProducts, fetchOrders }) {
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserType, setNewUserType] = useState("customer");
 
-  async function handleAddProduct(name, price, category) {
+  async function handleAddProduct(name, price, category, image, description) {
     const res = await fetch("/api/manager", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -26,6 +26,8 @@ export function useManagerActions({ fetchUsers, fetchProducts, fetchOrders }) {
         name,
         price: parseFloat(price),
         category,
+        image, 
+        description
       }),
     });
     const data = await res.json();
@@ -36,7 +38,7 @@ export function useManagerActions({ fetchUsers, fetchProducts, fetchOrders }) {
     return data;
   }
 
-  async function handleEditProduct(id, name, price, category) {
+  async function handleEditProduct(id, name, price, category, image, description) {
     const res = await fetch("/api/manager", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -46,6 +48,8 @@ export function useManagerActions({ fetchUsers, fetchProducts, fetchOrders }) {
         name,
         price: parseFloat(price),
         category,
+        image,
+        description
       }),
     });
     const data = await res.json();

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   Container,
   Grid,
@@ -25,9 +24,6 @@ export default function Dashboard() {
   const [cartOpen, setCartOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [items, setItems] = useState([]);
-
-  const searchParams = useSearchParams();
-  const [userId] = useState(searchParams.get("id") || "temp-" + Math.random());
 
   const [CATEGORIES, setCategories] = useState([]);
 
@@ -65,7 +61,7 @@ export default function Dashboard() {
   // Fetch cart items
   const fetchCart = async () => {
     try {
-      const res = await fetch(`/api/cart?id=${userId}`);
+      const res = await fetch(`/api/cart`);
       const data = await res.json();
       const cartItems = data.cart?.items || [];
       setItems(cartItems);
@@ -84,11 +80,9 @@ export default function Dashboard() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      userId,
       productId: product._id,
       name: product.name,
       price: product.price,
-      quantity: 1,
     }),
   });
   fetchCart();
@@ -105,14 +99,14 @@ export default function Dashboard() {
       await fetch("/api/cart", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, productId }),
+        body: JSON.stringify({ productId }),
       });
     } else {
       // Update quantity
       await fetch("/api/cart", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, productId, quantity: newQuantity }),
+        body: JSON.stringify({ productId, quantity: newQuantity }),
       });
     }
     fetchCart();
@@ -122,7 +116,7 @@ export default function Dashboard() {
     fetchProducts();
     fetchWeather();
     fetchCart();
-  }, [userId]);
+  }, []);
 
 useEffect(() => {
   async function loadCategories() {
@@ -252,37 +246,48 @@ useEffect(() => {
                   boxShadow: "0px 4px 18px rgba(0,0,0,0.15)",
                 }}
               >
+                {product.image && (
+                  <Box
+                    component="img"
+                    src={product.image}
+                    alt={product.name}
+                    sx={{ width: "100%", height: 150, objectFit: "cover", borderRadius: 2, mb: 2 }}
+                  />
+                )}
+
                 <CardContent>
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
                     {product.name}
                   </Typography>
-
-                  <Typography variant="body2" sx={{ opacity: 0.7 }}>
+              
+                  <Typography variant="body2" sx={{ opacity: 0.7, mb: 1 }}>
                     {product.category}
                   </Typography>
+              
+                  {product.description && (
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      {product.description}
+                    </Typography>
+                  )}
 
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 700, color: "#DA291C" }}
-                  >
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#DA291C" }}>
                     €{product.price.toFixed(2)}
                   </Typography>
-
-                  <Box sx={{ mt: 1 }}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      sx={{
-                        backgroundColor: "#FFC72C",
-                        color: "black",
-                        fontWeight: 700,
-                        "&:hover": { backgroundColor: "#FDB913" },
-                      }}
-                      onClick={() => addToCart(product)}
-                    >
-                      Add to Cart
-                    </Button>
-                  </Box>
+                
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    sx={{
+                      backgroundColor: "#FFC72C",
+                      color: "black",
+                      fontWeight: 700,
+                      "&:hover": { backgroundColor: "#FDB913" },
+                      mt: 1,
+                    }}
+                    onClick={() => addToCart(product)}
+                  >
+                    Add to Cart
+                  </Button>
                 </CardContent>
               </Card>
             </Grid>
@@ -368,7 +373,7 @@ useEffect(() => {
                   backgroundColor: "#DA291C",
                   "&:hover": { backgroundColor: "#B71C1C" },
                 }}
-                onClick={() => window.location.href = `/checkout?id=${userId}`}
+                onClick={() => window.location.href = `/checkout`}
               >
                 Checkout
               </Button>

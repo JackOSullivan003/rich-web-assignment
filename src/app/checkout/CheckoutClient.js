@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   Box,
   Typography,
@@ -12,8 +11,6 @@ import {
 } from "@mui/material";
 
 export default function CheckoutPage() {
-  const params = useSearchParams();
-  const userId = params.get("id");
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,17 +25,16 @@ export default function CheckoutPage() {
 
   // Fetch cart
   useEffect(() => {
-    if (!userId) return;
 
     async function loadCart() {
-      const res = await fetch(`/api/cart?id=${userId}`);
+      const res = await fetch(`/api/cart`);
       const data = await res.json();
       setItems(data.cart?.items || []);
       setLoading(false);
     }
 
     loadCart();
-  }, [userId]);
+  }, []);
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -59,10 +55,9 @@ export default function CheckoutPage() {
     // Fake 1-second payment delay
     setTimeout(async () => {
       const order = {
-        userId,
         items,
         total,
-        name,
+        userEmail,
         address,
         createdAt: new Date(),
       };
@@ -76,7 +71,7 @@ export default function CheckoutPage() {
 
       alert("Payment successful! Order placed.");
 
-      window.location.href =`/dashboard?id=${userId}`; // go back
+      window.location.href =`/dashboard`; // go back
     }, 1000);
   }
 

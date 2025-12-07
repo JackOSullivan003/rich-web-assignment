@@ -5,7 +5,6 @@ export async function POST(req) {
     const orders = await getCollection("Orders");
 
     const order = {
-      userId: data.userId,
       userEmail: data.userEmail,
       items: data.items,
       total: data.total,
@@ -14,6 +13,8 @@ export async function POST(req) {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
+    console.log(order);
 
     const result = await orders.insertOne(order);
     

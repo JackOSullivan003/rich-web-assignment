@@ -62,6 +62,8 @@ export async function POST(req) {
       await products.insertOne({
         name: body.name,
         price: body.price,
+        description: body.description || "",
+        image: image || "",
         category: body.category
       });
       return Response.json({ success: true });
@@ -122,19 +124,6 @@ export async function POST(req) {
 
 
     // ORDER ACTIONS
-    case "addOrder": {
-      const orders = await getCollection("Orders");
-      await orders.insertOne({
-        userId: body.userId ? new ObjectId(body.userId) : null,
-        items: body.items,
-        total: body.total,
-        status: body.status || "pending",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-      return Response.json({ success: true });
-    }
-
     case "editOrder": {
       const orders = await getCollection("Orders");
 

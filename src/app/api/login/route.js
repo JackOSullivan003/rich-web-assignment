@@ -37,7 +37,7 @@ export async function GET(req, res) {
       return Response.json({data: "valid", redirect:"/manager"});
     }
     else{
-      return Response.json({data: "valid", redirect:"/dashboard"})
+      return Response.json({data: "valid", redirect:"/dashboard?=" + email})
     }
 
   } catch (error) {

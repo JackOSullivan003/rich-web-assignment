@@ -25,6 +25,8 @@ export default function ManagerDashboard() {
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [newCategory, setNewCategory] = useState("");
+  const [newImage, setNewImage] = useState("");
+  const [newDescription, setNewDescription] = useState("");
 
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
@@ -60,6 +62,7 @@ export default function ManagerDashboard() {
     fetch(`/api/manager?section=${activeSection}`)
       .then(res => res.json())
       .then(json => {
+        console.log(json);
         if (activeSection === "graph") {
           setChartData({
             labels: json.data.map(item => item._id),
@@ -232,52 +235,79 @@ export default function ManagerDashboard() {
 
             <TableContainer component={Paper}>
               <Table>
-                <TableHead sx={{ backgroundColor: "#FFC72C" }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 800 }}>Name</TableCell>
-                    <TableCell sx={{ fontWeight: 800 }}>Price (€)</TableCell>
-                    <TableCell sx={{ fontWeight: 800 }}>Category</TableCell>
-                    <TableCell sx={{ fontWeight: 800 }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
+              <TableHead sx={{ backgroundColor: "#FFC72C" }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 800, width: 120 }}>Name</TableCell>
+                  <TableCell sx={{ fontWeight: 800, width: 80 }}>Price (€)</TableCell>
+                  <TableCell sx={{ fontWeight: 800, width: 100 }}>Category</TableCell>
+                  <TableCell sx={{ fontWeight: 800, width: 120 }}>Image</TableCell>
+                  <TableCell sx={{ fontWeight: 800 }}>Description</TableCell>
+                  <TableCell sx={{ fontWeight: 800, width: 150 }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
 
-                <TableBody>
-                  {products.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} align="center">
-                        No products found.
+              <TableBody>
+                {products.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">
+                      No products found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  products.map((product) => (
+                    <TableRow key={product._id} hover>
+                      <TableCell sx={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {product.name}
                       </TableCell>
+                  
+                      <TableCell>€{product.price.toFixed(2)}</TableCell>
+                  
+                      <TableCell sx={{ maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {product.category}
+                      </TableCell>
+                  
+                      <TableCell>
+                        {product.image ? (
+                          <Box
+                          component="img"
+                          src={product.image}
+                          alt={product.name}
+                          sx={{ width: 80, height: 50, objectFit: "cover", borderRadius: 1 }}
+                          />
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      
+                      <TableCell sx={{ maxWidth: 250, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {product.description || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          color="primary"
+                          onClick={() => {
+                            manager.setProductToEdit(product);
+                            manager.setShowEditProduct(true);
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          color="error"
+                          onClick={() => {
+                            manager.setProductToDelete(product);
+                            manager.setShowDeleteProduct(true);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                        
                     </TableRow>
-                  ) : (
-                    products.map((product) => (
-                      <TableRow key={product._id} hover>
-                        <TableCell>{product.name}</TableCell>
-                        <TableCell>€{product.price.toFixed(2)}</TableCell>
-                        <TableCell>{product.category}</TableCell>
-                        <TableCell>
-                          <IconButton
-                            color="primary"
-                            onClick={() => {
-                              manager.setProductToEdit(product);
-                              manager.setShowEditProduct(true);
-                            }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton
-                            color="error"
-                            onClick={() => {
-                              manager.setProductToDelete(product);
-                              manager.setShowDeleteProduct(true);
-                            }}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
+                  ))
+                )}
+              </TableBody>
+
               </Table>
             </TableContainer>
           </Card>
@@ -314,6 +344,8 @@ export default function ManagerDashboard() {
               setNewName("");
               setNewPrice("");
               setNewCategory("");
+              setNewImage(""); 
+              setNewDescription("");
             }}
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
@@ -338,6 +370,24 @@ export default function ManagerDashboard() {
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
             />
+
+
+            <TextField
+              label="Description"
+              fullWidth
+              sx={{ mb: 2 }}
+              value={newDescription || ""}
+              onChange={(e) => setNewDescription(e.target.value)}
+            />
+
+            <TextField
+              label="Image URL"
+              fullWidth
+              sx={{ mb: 2 }}
+              value={newImage || ""}
+              onChange={(e) => setNewImage(e.target.value)}
+            />
+
 
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
               <Button
@@ -382,7 +432,9 @@ export default function ManagerDashboard() {
                 manager.productToEdit._id,
                 manager.productToEdit.name,
                 manager.productToEdit.price,
-                manager.productToEdit.category
+                manager.productToEdit.category,
+                manager.productToEdit.image, 
+                manager.productToEdit.description
               );
             }}
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
@@ -414,6 +466,24 @@ export default function ManagerDashboard() {
                 manager.setProductToEdit({ ...manager.productToEdit, category: e.target.value })
               }
             />
+
+            <TextField
+              label="Description"
+              fullWidth
+              sx={{ mb: 2 }}
+              value={manager.productToEdit?.description || ""}
+              onChange={(e) => manager.setNewDescription({ ...manager.productToEdit, description: e.target.value })}
+            />
+
+            <TextField
+              label="Image URL"
+              fullWidth
+              sx={{ mb: 2 }}
+              value={manager.productToEdit?.image || ""}
+              onChange={(e) => manager.setNewImage({ ...manager.productToEdit, image: e.target.value })}
+            />
+
+
 
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
               <Button variant="outlined" onClick={() => manager.setShowEditProduct(false)}>
