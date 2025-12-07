@@ -88,7 +88,6 @@ export default function Dashboard() {
   fetchCart();
 };
 
-
   // Update item quantity
   const updateQuantity = async (productId, delta) => {
     const item = items.find((i) => i.productId === productId);
@@ -232,7 +231,7 @@ useEffect(() => {
         ))}
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={1}>
         {filteredProducts.length === 0 ? (
           <Typography>No products found in this category.</Typography>
         ) : (
