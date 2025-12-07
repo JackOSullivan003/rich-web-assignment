@@ -1,5 +1,4 @@
 "use client";
-import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
@@ -8,10 +7,6 @@ import AccountIcon from '@mui/icons-material/AccountCircleOutlined';
 import AdminIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 
 export default function BottomNav() {
-  const [cartOpen, setCartOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-
-  const [navValue, setNavValue] = useState(0);
 
     return (    
     
@@ -27,21 +22,12 @@ export default function BottomNav() {
       }}
     >
     <BottomNavigation
-      value={navValue}
-      onChange={(event, newValue) => {
-        setNavValue(newValue);
-
-        if (newValue === 1) {
-          // Cart tab clicked
-          setCartOpen(true);
-        }
-      }}
       showLabels
       sx={{ backgroundColor: "#FFF8E1" }}
     >
-      <BottomNavigationAction value={0} label="Home" icon={<HomeIcon />} href="/dashboard" />
-      <BottomNavigationAction value={2} label="Admin" icon={<AdminIcon/>} href="/manager"/>
-      <BottomNavigationAction value={3} label="Account" icon={<AccountIcon />} href="/register" />
+      <BottomNavigationAction label="Home" icon={<HomeIcon />} href="/dashboard" />
+      <BottomNavigationAction label="Admin" icon={<AdminIcon/>} href="/manager"/>
+      <BottomNavigationAction label="Account" icon={<AccountIcon />} href="/register" />
     </BottomNavigation>
     </Box>
     );
